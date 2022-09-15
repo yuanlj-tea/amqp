@@ -1,0 +1,21 @@
+{
+    "name": "yuanlj-tea/amqp",
+    "description": "rabbitmq component",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Amqp\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "yuanlj",
+            "email": "1107806823@qq.com"
+        }
+    ],
+    "require": {
+        "php-amqplib/php-amqplib": "^3.2",
+        "php": ">=7.1"
+    }
+}
