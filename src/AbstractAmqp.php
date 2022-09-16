@@ -80,6 +80,14 @@ abstract class AbstractAmqp
     }
 
     /**
+     * @return AMQPChannel
+     */
+    public function getChannel(): AMQPChannel
+    {
+        return $this->channel;
+    }
+
+    /**
      * @return ExchangeParams
      */
     public function getExchangeParams(): ExchangeParams
