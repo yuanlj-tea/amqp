@@ -14,7 +14,7 @@ class AmqpFacade
     /**
      * @var AbstractAmqp
      */
-    private $amqp;
+    public $amqp;
 
     /**
      * @var ExchangeParams
@@ -42,6 +42,12 @@ class AmqpFacade
         $this->queueDeclareArgs = new QueueDeclareArgs();
     }
 
+    /**
+     * 校验参数
+     * @param $key
+     * @return $this
+     * @throws InvalidParam
+     */
     private function checkParams($key)
     {
         if (!isset($this->config[$key]) || !is_array($this->config[$key])) {
@@ -59,6 +65,11 @@ class AmqpFacade
         return $this;
     }
 
+    /**
+     * 设置交换机参数
+     * @return $this
+     * @throws InvalidParam
+     */
     private function setExchange()
     {
         $exchangeName = $this->params['exchange_name'];
@@ -73,6 +84,11 @@ class AmqpFacade
         return $this;
     }
 
+    /**
+     * 设置队列参数
+     * @return $this
+     * @throws InvalidParam
+     */
     private function setQueue()
     {
         $queueName = $this->params['queue_name'];
@@ -87,6 +103,10 @@ class AmqpFacade
         return $this;
     }
 
+    /**
+     * 设置队列额外选项
+     * @return $this
+     */
     private function setQueueDeclareOptions()
     {
         if (isset($this->params['option'])) {
@@ -96,6 +116,10 @@ class AmqpFacade
         return $this;
     }
 
+    /**
+     * 设置死信队列
+     * @throws InvalidParam
+     */
     private function setDlxQueue()
     {
         if (!isset($this->params['dlx_params'])) {
@@ -117,6 +141,13 @@ class AmqpFacade
         $this->queueDeclareArgs->setDeadLetterArg($dlx['dlx_exchange_name'], $dlx['dlx_queue_name'], $dlx['dlx_routing_key'], $dlx['dlx_msg_ttl']);
     }
 
+    /**
+     * 获取amqp实例
+     * @param array $config
+     * @param string $key
+     * @return IAmqp
+     * @throws InvalidParam
+     */
     public static function getAmqp(array $config, string $key): IAmqp
     {
         $facade = new self($config, $key);

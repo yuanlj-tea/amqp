@@ -37,7 +37,7 @@ interface IAmqp
      * @param int $prefetchCount
      * @return mixed
      */
-    public function consume(\Closure $closure, bool $autoAck = false, $prefetchCount = 20);
+    public function consume(callable $function, bool $autoAck = false, $prefetchCount = 20);
 
     /**
      * 批量消费消息

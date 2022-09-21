@@ -59,6 +59,17 @@ abstract class AbstractAmqp
      */
     protected $consumerTag;
 
+    protected $retryMap = [];
+
+    // 失败最大重试次数
+    const MAX_TRY_TIMES = 10;
+
+    /**
+     * 最大重试失败后执行的逻辑
+     * @var callable|null
+     */
+    protected $maxRetryCallback = null;
+
     public function __construct(array $config)
     {
         $this->config = $config;
@@ -135,6 +146,15 @@ abstract class AbstractAmqp
     public function setQueueDeclareArgs(QueueDeclareArgs $queueDeclareArgs): AbstractAmqp
     {
         $this->queueDeclareArgs = $queueDeclareArgs;
+        return $this;
+    }
+
+    /**
+     * @param null $maxRetryClosure
+     */
+    public function setMaxRetryCallback($maxRetryCallback): AbstractAmqp
+    {
+        $this->maxRetryCallback = $maxRetryCallback;
         return $this;
     }
 

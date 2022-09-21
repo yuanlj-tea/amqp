@@ -90,7 +90,7 @@ class Amqp extends AbstractAmqp implements IAmqp
      * @param int $prefetchCount
      * @throws \Throwable
      */
-    public function consume(\Closure $closure, bool $autoAck = false, $prefetchCount = 20)
+    public function consume(callable $function, bool $autoAck = false, $prefetchCount = 20)
     {
         $this->autoAck = $autoAck;
         $this->queueBind();
@@ -114,19 +114,33 @@ class Amqp extends AbstractAmqp implements IAmqp
                 $this->autoAck,
                 false,
                 false,
-                function (AMQPMessage $msg) use ($closure) {
+                function (AMQPMessage $msg) use ($function) {
                     try {
-                        call_user_func($closure, $msg);
+                        call_user_func($function, $msg);
                         if (!$this->autoAck) {
-                            var_dump('ack ' . $msg->getBody());
                             $msg->ack();
                         }
                     } catch (\Throwable $t) {
                         if (!$this->autoAck) {
-                            // nack重新入队列
-                            $msg->nack(true);
+                            // 数据库连接异常直接抛出异常由supervisor重新拉起常驻进程；其它异常重新入队列做重试，达到最大重试次数后入死信队列(如有配置)或丢弃消息
+                            $body = $msg->getBody();
+                            $md5 = md5($body);
+                            if (isset($this->retryMap[$md5])) {
+                                $this->retryMap[$md5]++;
+                            } else {
+                                $this->retryMap[$md5] = 1;
+                            }
+                            if ($this->retryMap[$md5] > self::MAX_TRY_TIMES) {
+                                $msg->nack(false);
+                                unset($this->retryMap[$md5]);
+                                if (is_callable($this->maxRetryCallback)) {
+                                    call_user_func($this->maxRetryCallback, $msg);
+                                }
+                            } else {
+                                $msg->nack(true);
+                            }
                         }
-                        throw $t;
+                        $this->exceptionHandle($t);
                     }
                 }
             );
@@ -232,5 +246,25 @@ class Amqp extends AbstractAmqp implements IAmqp
             $this->run = false;
         }
         $this->run = false;
+    }
+
+    /**
+     * 处理断线重连异常
+     * @param \Throwable $t
+     * @throws \Throwable
+     */
+    public function exceptionHandle(\Throwable $t)
+    {
+        if ($this->checkConnectError($t)) {
+            throw $t;
+        }
+    }
+
+    public function checkConnectError(\Throwable $e)
+    {
+        if (strpos($e->getMessage(), 'Error while sending QUERY packet') !== false || strpos($e->getMessage(), 'MySQL server has gone away') !== false) {
+            return true;
+        }
+        return false;
     }
 }
