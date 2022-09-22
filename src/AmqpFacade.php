@@ -36,7 +36,7 @@ class AmqpFacade
         $this->config = $config;
         $this->checkParams($key);
 
-        $this->amqp = new Amqp($config);
+        $this->amqp = Amqp::getInstance($config);
         $this->exchangeParams = new ExchangeParams();
         $this->queueParams = new QueueParams();
         $this->queueDeclareArgs = new QueueDeclareArgs();
